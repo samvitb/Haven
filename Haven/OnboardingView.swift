@@ -36,15 +36,54 @@ struct OnboardingView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Progress indicator
+                // Header with back button and progress
                 HStack {
-                    ForEach(0..<4, id: \.self) { index in
-                        Rectangle()
-                            .fill(index <= currentStep ? Color.white : Color.gray.opacity(0.3))
-                            .frame(height: 2)
-                            .shadow(color: index <= currentStep ? .white.opacity(0.4) : .clear, radius: 4, x: 0, y: 0)
-                            .animation(.easeInOut(duration: 0.3), value: currentStep)
+                    // Back button (hidden on first step)
+                    if currentStep > 0 {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                currentStep -= 1
+                            }
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 16, weight: .semibold))
+                                Text("Back")
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white.opacity(0.1))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    )
+                                    .shadow(color: .white.opacity(0.2), radius: 6, x: 0, y: 0)
+                                    .shadow(color: .white.opacity(0.1), radius: 12, x: 0, y: 0)
+                            )
+                        }
+                    } else {
+                        Spacer()
+                            .frame(width: 80) // Maintain consistent spacing
                     }
+                    
+                    Spacer()
+                    
+                    // Progress indicator
+                    HStack {
+                        ForEach(0..<4, id: \.self) { index in
+                            Rectangle()
+                                .fill(index <= currentStep ? Color.white : Color.gray.opacity(0.3))
+                                .frame(height: 2)
+                                .shadow(color: index <= currentStep ? .white.opacity(0.6) : .clear, radius: 6, x: 0, y: 0)
+                                .shadow(color: index <= currentStep ? .white.opacity(0.3) : .clear, radius: 12, x: 0, y: 0)
+                                .animation(.easeInOut(duration: 0.3), value: currentStep)
+                        }
+                    }
+                    .frame(width: 80)
                 }
                 .padding(.horizontal, 40)
                 .padding(.top, 20)
@@ -99,13 +138,16 @@ struct WelcomeScreenView: View {
                         Circle()
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     )
-                    .shadow(color: .white.opacity(0.15), radius: 12, x: 0, y: 0)
-                    .shadow(color: .white.opacity(0.08), radius: 24, x: 0, y: 0)
+                    .shadow(color: .white.opacity(0.3), radius: 16, x: 0, y: 0)
+                    .shadow(color: .white.opacity(0.2), radius: 32, x: 0, y: 0)
+                    .shadow(color: .white.opacity(0.1), radius: 48, x: 0, y: 0)
                 
-                Image(systemName: "shield.lefthalf.filled")
-                    .font(.system(size: 50, weight: .light))
-                    .foregroundColor(.white)
-                    .shadow(color: .white.opacity(0.3), radius: 8, x: 0, y: 0)
+                Image("Icon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 75, height: 75)
+                    .shadow(color: .white.opacity(0.5), radius: 12, x: 0, y: 0)
+                    .shadow(color: .white.opacity(0.3), radius: 24, x: 0, y: 0)
             }
             .scaleEffect(isAnimating ? 1.05 : 1.0)
             .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isAnimating)
@@ -145,8 +187,9 @@ struct WelcomeScreenView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.white)
-                            .shadow(color: .white.opacity(0.3), radius: 8, x: 0, y: 0)
-                            .shadow(color: .white.opacity(0.1), radius: 16, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.5), radius: 12, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.3), radius: 24, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.1), radius: 36, x: 0, y: 0)
                     )
                 }
                 .scaleEffect(1.0)
@@ -199,7 +242,8 @@ struct NameInputView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.white.opacity(0.3), lineWidth: 1)
                             )
-                            .shadow(color: .white.opacity(0.1), radius: 4, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.2), radius: 8, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.1), radius: 16, x: 0, y: 0)
                     )
                     .focused($isTextFieldFocused)
                     .onSubmit {
@@ -230,8 +274,9 @@ struct NameInputView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.white)
-                            .shadow(color: userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .clear : .white.opacity(0.3), radius: 8, x: 0, y: 0)
-                            .shadow(color: userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .clear : .white.opacity(0.1), radius: 16, x: 0, y: 0)
+                            .shadow(color: userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .clear : .white.opacity(0.5), radius: 12, x: 0, y: 0)
+                            .shadow(color: userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .clear : .white.opacity(0.3), radius: 24, x: 0, y: 0)
+                            .shadow(color: userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .clear : .white.opacity(0.1), radius: 36, x: 0, y: 0)
                     )
                 }
                 .disabled(userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -281,7 +326,8 @@ struct AgeInputView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
                         )
-                        .shadow(color: .white.opacity(0.08), radius: 6, x: 0, y: 0)
+                        .shadow(color: .white.opacity(0.15), radius: 10, x: 0, y: 0)
+                        .shadow(color: .white.opacity(0.08), radius: 20, x: 0, y: 0)
                 )
                 
                 Button(action: {
@@ -302,8 +348,9 @@ struct AgeInputView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.white)
-                            .shadow(color: .white.opacity(0.3), radius: 8, x: 0, y: 0)
-                            .shadow(color: .white.opacity(0.1), radius: 16, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.5), radius: 12, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.3), radius: 24, x: 0, y: 0)
+                            .shadow(color: .white.opacity(0.1), radius: 36, x: 0, y: 0)
                     )
                 }
             }
@@ -361,7 +408,8 @@ struct OccupationSelectionView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                         )
-                        .shadow(color: .white.opacity(0.1), radius: 4, x: 0, y: 0)
+                        .shadow(color: .white.opacity(0.2), radius: 8, x: 0, y: 0)
+                        .shadow(color: .white.opacity(0.1), radius: 16, x: 0, y: 0)
                 )
                 
                 // Occupation list
@@ -392,8 +440,9 @@ struct OccupationSelectionView: View {
                                             RoundedRectangle(cornerRadius: 10)
                                                 .stroke(selectedOccupation == occupation ? Color.white.opacity(0.5) : Color.white.opacity(0.2), lineWidth: 1)
                                         )
-                                        .shadow(color: selectedOccupation == occupation ? .white.opacity(0.2) : .clear, radius: 6, x: 0, y: 0)
-                                        .shadow(color: selectedOccupation == occupation ? .white.opacity(0.1) : .clear, radius: 12, x: 0, y: 0)
+                                        .shadow(color: selectedOccupation == occupation ? .white.opacity(0.4) : .clear, radius: 10, x: 0, y: 0)
+                                        .shadow(color: selectedOccupation == occupation ? .white.opacity(0.2) : .clear, radius: 20, x: 0, y: 0)
+                                        .shadow(color: selectedOccupation == occupation ? .white.opacity(0.1) : .clear, radius: 30, x: 0, y: 0)
                                 )
                             }
                         }
@@ -401,7 +450,7 @@ struct OccupationSelectionView: View {
                 }
                 .frame(maxHeight: 300)
                 
-                // Continue button
+                //Continue
                 Button(action: {
                     if !selectedOccupation.isEmpty {
                         // TODO: Complete onboarding and navigate to main app
@@ -421,8 +470,9 @@ struct OccupationSelectionView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(selectedOccupation.isEmpty ? Color.gray : Color.white)
-                            .shadow(color: selectedOccupation.isEmpty ? .clear : .white.opacity(0.3), radius: 8, x: 0, y: 0)
-                            .shadow(color: selectedOccupation.isEmpty ? .clear : .white.opacity(0.1), radius: 16, x: 0, y: 0)
+                            .shadow(color: selectedOccupation.isEmpty ? .clear : .white.opacity(0.5), radius: 12, x: 0, y: 0)
+                            .shadow(color: selectedOccupation.isEmpty ? .clear : .white.opacity(0.3), radius: 24, x: 0, y: 0)
+                            .shadow(color: selectedOccupation.isEmpty ? .clear : .white.opacity(0.1), radius: 36, x: 0, y: 0)
                     )
                 }
                 .disabled(selectedOccupation.isEmpty)
