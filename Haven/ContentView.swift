@@ -8,8 +8,20 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var hasCompletedOnboarding = false
+    @State private var userName = ""
+    
     var body: some View {
-        OnboardingView()
+        if hasCompletedOnboarding && !userName.isEmpty {
+            HomeView(userName: userName)
+        } else {
+            OnboardingView(
+                onComplete: { name in
+                    userName = name
+                    hasCompletedOnboarding = true
+                }
+            )
+        }
     }
 }
 

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    let onComplete: (String) -> Void
     @State private var currentStep = 0
     @State private var userName = ""
     @State private var userAge = 18
@@ -100,7 +101,7 @@ struct OnboardingView: View {
                     case 2:
                         AgeInputView(userAge: $userAge, currentStep: $currentStep)
                     case 3:
-                        OccupationSelectionView(selectedOccupation: $selectedOccupation, occupations: occupations, currentStep: $currentStep, userName: userName, userAge: userAge)
+                        OccupationSelectionView(selectedOccupation: $selectedOccupation, occupations: occupations, currentStep: $currentStep, userName: userName, userAge: userAge, onComplete: onComplete)
                     default:
                         WelcomeScreenView(currentStep: $currentStep)
                     }
@@ -365,6 +366,7 @@ struct OccupationSelectionView: View {
     @Binding var currentStep: Int
     let userName: String
     let userAge: Int
+    let onComplete: (String) -> Void
     @State private var searchText = ""
     
     private var filteredOccupations: [String] {
@@ -453,8 +455,7 @@ struct OccupationSelectionView: View {
                 //Continue
                 Button(action: {
                     if !selectedOccupation.isEmpty {
-                        // TODO: Complete onboarding and navigate to main app
-                        print("Onboarding completed for \(userName), age \(userAge), occupation: \(selectedOccupation)")
+                        onComplete(userName)
                     }
                 }) {
                     HStack {
@@ -483,5 +484,5 @@ struct OccupationSelectionView: View {
 }
 
 #Preview {
-    OnboardingView()
+    OnboardingView { _ in }
 }
