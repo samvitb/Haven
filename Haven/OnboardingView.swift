@@ -311,7 +311,7 @@ struct AgeInputView: View {
             VStack(spacing: 24) {
                 // Age picker with custom styling
                 Picker("Age", selection: $userAge) {
-                    ForEach(15...80, id: \.self) { age in
+                    ForEach(13...80, id: \.self) { age in
                         Text("\(age)")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white)
