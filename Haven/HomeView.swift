@@ -16,9 +16,6 @@ struct HomeView: View {
     @State private var weeklyStressData: [StressDataPoint] = []
     @State private var showResetExercise = false
     
-    private let bottomNavIcons = ["house.fill", "chart.line.uptrend.xyaxis", "brain.head.profile", "person.fill"]
-    private let bottomNavLabels = ["Home", "Progress", "Tools", "Profile"]
-    
     var body: some View {
         ZStack {
             // Noir background gradient
@@ -62,9 +59,8 @@ struct HomeView: View {
             .blendMode(.screen)
             .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(spacing: 24) {
+            ScrollView {
+                VStack(spacing: 24) {
                     // Welcome Header
                     HStack {
                         VStack(alignment: .leading, spacing: 6) {
@@ -332,44 +328,6 @@ struct HomeView: View {
                     .padding(.horizontal, 24)
                     .padding(.bottom, 100) // Space for bottom nav
                     
-                    }
-                }
-                
-                // Fixed Bottom Navigation
-                VStack(spacing: 0) {
-                    Divider()
-                        .background(Color.white.opacity(0.2))
-                    
-                    HStack(spacing: 0) {
-                        ForEach(0..<4) { index in
-                            Button(action: {
-                                // Placeholder action
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: bottomNavIcons[index])
-                                        .font(.system(size: 20, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.7))
-                                    
-                                    Text(bottomNavLabels[index])
-                                        .font(.system(size: 10, weight: .medium))
-                                        .foregroundColor(.gray)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        Color.clear
-                            .background(
-                                RoundedRectangle(cornerRadius: 0)
-                                    .fill(Color.black.opacity(0.1))
-                                    .shadow(color: .white.opacity(0.1), radius: 8, x: 0, y: -2)
-                                    .shadow(color: .white.opacity(0.05), radius: 16, x: 0, y: -4)
-                            )
-                    )
                 }
             }
         }
