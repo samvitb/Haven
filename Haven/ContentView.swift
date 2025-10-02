@@ -143,15 +143,15 @@ struct MainTabView: View {
         }
     }
     
-    private let bottomNavIcons = ["house.fill", "chart.line.uptrend.xyaxis", "brain.head.profile", "person.fill"]
-    private let bottomNavLabels = ["Home", "Progress", "Tools", "Profile"]
+    private let bottomNavIcons = ["house.fill", "map.fill", "brain.head.profile", "person.fill"]
+    private let bottomNavLabels = ["Home", "Journey", "Forge", "Profile"]
 }
 
 // Placeholder views for other tabs
 struct ProgressView: View {
     var body: some View {
         VStack {
-            Text("Progress")
+            Text("Your Journey")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
             Text("Coming soon...")
