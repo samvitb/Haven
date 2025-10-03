@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct BoxBreathingView: View {
     @Environment(\.dismiss) private var dismiss
@@ -49,7 +50,7 @@ struct BoxBreathingView: View {
     
     var body: some View {
         ZStack {
-            // Noir background
+            // Noir background gradient
             LinearGradient(
                 gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.1)]),
                 startPoint: .topLeading,
@@ -65,6 +66,28 @@ struct BoxBreathingView: View {
                 endRadius: 420
             )
             .blur(radius: 28)
+            .blendMode(.screen)
+            .ignoresSafeArea()
+            
+            // Stronger monochromatic glow from top
+            RadialGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.08), Color.clear]),
+                center: .top,
+                startRadius: 0,
+                endRadius: 520
+            )
+            .blur(radius: 36)
+            .blendMode(.screen)
+            .ignoresSafeArea()
+            
+            // Stronger monochromatic glow from bottom
+            RadialGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.08), Color.clear]),
+                center: .bottom,
+                startRadius: 0,
+                endRadius: 520
+            )
+            .blur(radius: 36)
             .blendMode(.screen)
             .ignoresSafeArea()
             
@@ -86,11 +109,6 @@ struct BoxBreathingView: View {
                     VStack(spacing: 30) {
                         // Breathing Square with Tracing Animation
                         ZStack {
-                            // Background square
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 3)
-                                .frame(width: 200, height: 200)
-                            
                             // Animated tracing square
                             BoxBreathingSquareView(currentPhase: currentPhase, isRunning: isRunning)
                         }
@@ -290,6 +308,14 @@ struct BoxBreathingView: View {
                 }
             }
         }
+        .onAppear {
+            // Prevent screen timeout during breathing exercise
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            // Re-enable screen timeout when leaving the exercise
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
     
     
@@ -297,10 +323,14 @@ struct BoxBreathingView: View {
         withAnimation(.easeOut(duration: 0.3)) {
             showStartButton = false
         }
-        isRunning = true
         timeRemaining = 4
         currentPhase = .inhale
         cycleCount = 0
+        
+        // Start the exercise after a delay to show the full 4-second countdown
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isRunning = true
+        }
     }
     
     
@@ -351,154 +381,88 @@ struct BoxBreathingSquareView: View {
     @State private var tracingProgress: Double = 0.0
     
     var body: some View {
-        // Animated square with progressive edge tracing
-        RoundedRectangle(cornerRadius: 20)
-            .stroke(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        getEdgeColor(edge: .top),
-                        getEdgeColor(edge: .right),
-                        getEdgeColor(edge: .bottom),
-                        getEdgeColor(edge: .left)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                lineWidth: 6
-            )
-            .frame(width: 200, height: 200)
-            .shadow(
-                color: isRunning ? currentPhase.color.opacity(1.0) : .clear,
-                radius: 20,
-                x: 0,
-                y: 0
-            )
-            .shadow(
-                color: isRunning ? currentPhase.color.opacity(0.8) : .clear,
-                radius: 40,
-                x: 0,
-                y: 0
-            )
-            .shadow(
-                color: isRunning ? currentPhase.color.opacity(0.6) : .clear,
-                radius: 60,
-                x: 0,
-                y: 0
-            )
-            .shadow(
-                color: isRunning ? currentPhase.color.opacity(0.4) : .clear,
-                radius: 80,
-                x: 0,
-                y: 0
-            )
-            .mask(
-                // Create a mask that reveals edges progressively
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        Color.white,
-                        lineWidth: 6
-                    )
-                    .frame(width: 200, height: 200)
-                    .mask(edgeRevealMask)
-            )
-            .onChange(of: currentPhase) { _ in
-                if isRunning {
-                    tracingProgress = 0.0
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.linear(duration: 4.0)) {
-                            tracingProgress = 1.0
-                        }
-                    }
-                }
-            }
-            .onChange(of: isRunning) { running in
-                if running && currentPhase == .inhale {
-                    withAnimation(.linear(duration: 4.0)) {
-                        tracingProgress = 1.0
-                    }
-                } else if !running {
-                    tracingProgress = 0.0
-                }
-            }
-    }
-    
-    private enum Edge {
-        case top, right, bottom, left
-    }
-    
-    private func getEdgeColor(edge: Edge) -> Color {
-        if !isRunning {
-            return Color.white.opacity(0.3)
-        }
-        
-        switch currentPhase {
-        case .inhale:
-            return edge == .top ? Color.green : Color.white.opacity(0.3)
-        case .hold1:
-            return edge == .right ? Color.blue : Color.white.opacity(0.3)
-        case .exhale:
-            return edge == .bottom ? Color.orange : Color.white.opacity(0.3)
-        case .hold2:
-            return edge == .left ? Color.purple : Color.white.opacity(0.3)
-        }
-    }
-    
-    private var edgeRevealMask: some View {
         ZStack {
-            // Circular tracing around the perimeter
+            // Static square outline
+            Rectangle()
+                .stroke(Color.white.opacity(0.3), lineWidth: 6)
+                .frame(width: 200, height: 200)
+            
+            // Animated ball that traces the square
             if isRunning {
                 CircularTraceView(progress: tracingProgress, currentPhase: currentPhase)
             }
         }
+        .onChange(of: currentPhase) { _ in
+            if isRunning {
+                tracingProgress = 0.0
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.linear(duration: 5.0)) {
+                        tracingProgress = 1.0
+                    }
+                }
+            }
+        }
+        .onChange(of: isRunning) { running in
+            if running && currentPhase == .inhale {
+                withAnimation(.linear(duration: 5.0)) {
+                    tracingProgress = 1.0
+                }
+            } else if !running {
+                tracingProgress = 0.0
+            }
+        }
     }
+    
 }
 
 struct CircularTraceView: View {
     let progress: Double
     let currentPhase: BoxBreathingView.BreathingPhase
     
-    var body: some View {
-        ZStack {
-            // Top edge - lights up left to right during inhale
-            if currentPhase == .inhale {
-                Rectangle()
-                    .fill(Color.green)
-                    .frame(width: 200 * progress, height: 6)
-                    .offset(y: -97)
-                    .shadow(color: Color.green.opacity(0.8), radius: 8, x: 0, y: 0)
-                    .shadow(color: Color.green.opacity(0.4), radius: 16, x: 0, y: 0)
-            }
+    private var ballPosition: CGPoint {
+        let squareSize: CGFloat = 200
+        let halfSize = squareSize / 2
+        
+        switch currentPhase {
+        case .inhale:
+            // Top edge: left to right
+            let x = -halfSize + (squareSize * progress)
+            return CGPoint(x: x, y: -halfSize)
             
-            // Right edge - lights up top to bottom during hold1
-            if currentPhase == .hold1 {
-                Rectangle()
-                    .fill(Color.blue)
-                    .frame(width: 6, height: 200 * progress)
-                    .offset(x: 97)
-                    .shadow(color: Color.blue.opacity(0.8), radius: 8, x: 0, y: 0)
-                    .shadow(color: Color.blue.opacity(0.4), radius: 16, x: 0, y: 0)
-            }
+        case .hold1:
+            // Right edge: top to bottom
+            let y = -halfSize + (squareSize * progress)
+            return CGPoint(x: halfSize, y: y)
             
-            // Bottom edge - lights up right to left during exhale
-            if currentPhase == .exhale {
-                Rectangle()
-                    .fill(Color.orange)
-                    .frame(width: 200 * progress, height: 6)
-                    .offset(y: 97)
-                    .shadow(color: Color.orange.opacity(0.8), radius: 8, x: 0, y: 0)
-                    .shadow(color: Color.orange.opacity(0.4), radius: 16, x: 0, y: 0)
-            }
+        case .exhale:
+            // Bottom edge: right to left
+            let x = halfSize - (squareSize * progress)
+            return CGPoint(x: x, y: halfSize)
             
-            // Left edge - lights up bottom to top during hold2
-            if currentPhase == .hold2 {
-                Rectangle()
-                    .fill(Color.purple)
-                    .frame(width: 6, height: 200 * progress)
-                    .offset(x: -97)
-                    .shadow(color: Color.purple.opacity(0.8), radius: 8, x: 0, y: 0)
-                    .shadow(color: Color.purple.opacity(0.4), radius: 16, x: 0, y: 0)
-            }
+        case .hold2:
+            // Left edge: bottom to top
+            let y = halfSize - (squareSize * progress)
+            return CGPoint(x: -halfSize, y: y)
         }
+    }
+    
+    private var ballColor: Color {
+        switch currentPhase {
+        case .inhale: return .green
+        case .hold1: return .blue
+        case .exhale: return .orange
+        case .hold2: return .purple
+        }
+    }
+    
+    var body: some View {
+        Circle()
+            .fill(ballColor)
+            .frame(width: 16, height: 16)
+            .offset(x: ballPosition.x, y: ballPosition.y)
+            .shadow(color: ballColor.opacity(0.8), radius: 12, x: 0, y: 0)
+            .shadow(color: ballColor.opacity(0.4), radius: 24, x: 0, y: 0)
+            .shadow(color: ballColor.opacity(0.2), radius: 36, x: 0, y: 0)
     }
 }
 

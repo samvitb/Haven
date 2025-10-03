@@ -74,39 +74,31 @@ struct MainTabView: View {
             .blendMode(.screen)
             .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                // Content based on selected tab
-                Group {
-                switch selectedTab {
-                case 0:
+            ZStack {
+                // Full-screen content with horizontal swipe navigation
+                TabView(selection: $selectedTab) {
                     HomeView(userName: userName)
-                case 1:
-                    ProgressView()
-                case 2:
-                    ForgeView()
-                case 3:
-                    ProfileView()
-                default:
-                    HomeView(userName: userName)
-                }
-                }
-                .transition(.asymmetric(
-                    insertion: selectedTab > previousTab ? 
-                        .move(edge: .trailing).combined(with: .opacity) : 
-                        .move(edge: .leading).combined(with: .opacity),
-                    removal: selectedTab > previousTab ? 
-                        .move(edge: .leading).combined(with: .opacity) : 
-                        .move(edge: .trailing).combined(with: .opacity)
-                ))
-                .animation(.easeInOut(duration: 0.3), value: selectedTab)
-                
-                // Fixed Bottom Navigation
-                VStack(spacing: 0) {
-                    Divider()
-                        .background(Color.white.opacity(0.2))
+                        .tag(0)
                     
-                    HStack(spacing: 0) {
-                        ForEach(0..<4) { index in
+                    ProgressView()
+                        .tag(1)
+                    
+                    ForgeView()
+                        .tag(2)
+                    
+                    ProfileView()
+                        .tag(3)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.easeInOut(duration: 0.3), value: selectedTab)
+                .ignoresSafeArea(.all, edges: [.top, .bottom])
+                
+                // Floating Navigation Bar - Completely separate from content
+                VStack {
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        ForEach(0..<4, id: \.self) { index in
                             Button(action: {
                                 previousTab = selectedTab
                                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -115,29 +107,40 @@ struct MainTabView: View {
                             }) {
                                 VStack(spacing: 4) {
                                     Image(systemName: bottomNavIcons[index])
-                                        .font(.system(size: 20, weight: .medium))
-                                        .foregroundColor(selectedTab == index ? .white : .white.opacity(0.7))
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(selectedTab == index ? .white : .gray.opacity(0.7))
                                     
                                     Text(bottomNavLabels[index])
-                                        .font(.system(size: 10, weight: .medium))
-                                        .foregroundColor(selectedTab == index ? .white : .gray)
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundColor(selectedTab == index ? .white : .gray.opacity(0.7))
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
+                                .padding(.horizontal, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedTab == index ? Color.white.opacity(0.2) : Color.clear)
+                                )
                             }
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(
-                        Color.clear
-                            .background(
-                                RoundedRectangle(cornerRadius: 0)
-                                    .fill(Color.black.opacity(0.1))
-                                    .shadow(color: .white.opacity(0.1), radius: 8, x: 0, y: -2)
-                                    .shadow(color: .white.opacity(0.05), radius: 16, x: 0, y: -4)
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                Color.black.opacity(0.3)
                             )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
+                            )
+                            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+                            .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 0)
+                            .shadow(color: Color.white.opacity(0.05), radius: 25, x: 0, y: 0)
                     )
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 8) // Moved much closer to bottom
                 }
             }
         }

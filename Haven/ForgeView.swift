@@ -220,15 +220,50 @@ struct ExerciseDetailView: View {
     let exercise: Exercise
     @Environment(\.dismiss) private var dismiss
     @State private var showBoxBreathing: Bool = false
+    @State private var showPMR: Bool = false
+    @State private var showGrounding: Bool = false
     
     var body: some View {
         ZStack {
-            // Noir background
+            // Noir background gradient
             LinearGradient(
                 gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.1)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            .ignoresSafeArea()
+            
+            // Subtle white glow overlay
+            RadialGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.06), Color.clear]),
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 420
+            )
+            .blur(radius: 28)
+            .blendMode(.screen)
+            .ignoresSafeArea()
+            
+            // Stronger monochromatic glow from top
+            RadialGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.08), Color.clear]),
+                center: .top,
+                startRadius: 0,
+                endRadius: 520
+            )
+            .blur(radius: 36)
+            .blendMode(.screen)
+            .ignoresSafeArea()
+            
+            // Stronger monochromatic glow from bottom
+            RadialGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.08), Color.clear]),
+                center: .bottom,
+                startRadius: 0,
+                endRadius: 520
+            )
+            .blur(radius: 36)
+            .blendMode(.screen)
             .ignoresSafeArea()
             
             ScrollView {
@@ -286,6 +321,10 @@ struct ExerciseDetailView: View {
                     Button(action: {
                         if exercise.id == 1 { // Box Breathing
                             showBoxBreathing = true
+                        } else if exercise.id == 2 { // PMR
+                            showPMR = true
+                        } else if exercise.id == 3 { // Grounding
+                            showGrounding = true
                         }
                         // TODO: Add other exercises
                     }) {
@@ -314,6 +353,12 @@ struct ExerciseDetailView: View {
         }
         .sheet(isPresented: $showBoxBreathing) {
             BoxBreathingView()
+        }
+        .sheet(isPresented: $showPMR) {
+            PMRView()
+        }
+        .sheet(isPresented: $showGrounding) {
+            GroundingView()
         }
     }
 }
