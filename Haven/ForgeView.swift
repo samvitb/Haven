@@ -62,16 +62,28 @@ struct ForgeView: View {
         ),
         Exercise(
             id: 5,
-            title: "Behavioral Activation",
-            subtitle: "Mini-Challenges",
-            icon: "target",
-            shortDescription: "Small, doable activities tied to values",
-            fullDescription: "Behavioral Activation Mini-Challenges",
-            benefits: "Increases dopamine, disrupts depressive withdrawal cycle",
-            howItWorks: "Encourage small, doable activities tied to values (call a friend, go outside, stretch)",
-            backedBy: "Gold-standard depression treatment",
-            appFeature: "\"Daily Challenge\" suggestion, mark as complete, earn a badge"
-        )
+            title: "Thought Record",
+            subtitle: "Cognitive Restructuring",
+            icon: "brain.head.profile",
+            shortDescription: "Identify and challenge negative thoughts with evidence",
+            fullDescription: "Thought Record (Cognitive Restructuring)",
+            benefits: "Reduces depression and anxiety, improves emotional regulation, increases balanced thinking",
+            howItWorks: "Identify negative thought → Examine evidence for/against → Create balanced alternative thought",
+            backedBy: "Aaron Beck's Cognitive Behavioral Therapy (CBT)",
+            appFeature: "Guided prompts with thought patterns library and reframing suggestions"
+        ),
+        Exercise(
+            id: 6,
+            title: "Problem-Solving Therapy",
+            subtitle: "PST",
+            icon: "lightbulb.fill",
+            shortDescription: "Structured approach to tackle problems systematically",
+            fullDescription: "Problem-Solving Therapy (PST)",
+            benefits: "Increases sense of control, reduces hopelessness, improves coping skills",
+            howItWorks: "Define problem → Brainstorm solutions → Evaluate options → Create action plan → Review results",
+            backedBy: "Nezu & Nezu's research on depression treatment",
+            appFeature: "Step-by-step guided problem-solving framework with action tracking"
+        ),
     ]
     
     var body: some View {
@@ -201,10 +213,10 @@ struct ExerciseCardView: View {
             .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(Color.white.opacity(0.05))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 20)
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: .white.opacity(0.2), radius: 12, x: 0, y: 0)
@@ -222,6 +234,9 @@ struct ExerciseDetailView: View {
     @State private var showBoxBreathing: Bool = false
     @State private var showPMR: Bool = false
     @State private var showGrounding: Bool = false
+    @State private var showGratitude: Bool = false
+    @State private var showThoughtRecord: Bool = false
+    @State private var showProblemSolving: Bool = false
     
     var body: some View {
         ZStack {
@@ -325,8 +340,13 @@ struct ExerciseDetailView: View {
                             showPMR = true
                         } else if exercise.id == 3 { // Grounding
                             showGrounding = true
+                        } else if exercise.id == 4 { // Gratitude
+                            showGratitude = true
+                        } else if exercise.id == 5 { // Thought Record
+                            showThoughtRecord = true
+                        } else if exercise.id == 6 { // Problem-Solving Therapy
+                            showProblemSolving = true
                         }
-                        // TODO: Add other exercises
                     }) {
                         HStack {
                             Text("Start Exercise")
@@ -339,7 +359,7 @@ struct ExerciseDetailView: View {
                         .padding(.horizontal, 32)
                         .padding(.vertical, 16)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 20)
                                 .fill(Color.white)
                                 .shadow(color: .white.opacity(0.5), radius: 12, x: 0, y: 0)
                                 .shadow(color: .white.opacity(0.3), radius: 24, x: 0, y: 0)
@@ -359,6 +379,15 @@ struct ExerciseDetailView: View {
         }
         .sheet(isPresented: $showGrounding) {
             GroundingView()
+        }
+        .sheet(isPresented: $showGratitude) {
+            GratitudeView()
+        }
+        .sheet(isPresented: $showThoughtRecord) {
+            ThoughtRecordView()
+        }
+        .sheet(isPresented: $showProblemSolving) {
+            ProblemSolvingView()
         }
     }
 }
@@ -389,10 +418,10 @@ struct DetailSectionView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
                 .shadow(color: .white.opacity(0.1), radius: 8, x: 0, y: 0)

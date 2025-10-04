@@ -15,6 +15,26 @@ struct HomeView: View {
     @State private var hasCompletedToday = false
     @State private var weeklyStressData: [StressDataPoint] = []
     @State private var showResetExercise = false
+    @State private var hasSpunToday = false
+    @State private var isSpinning = false
+    @State private var currentActivity: String = ""
+    @State private var showActivity = false
+    @State private var slotOffset: CGFloat = 0
+    
+    private let activities = [
+        "Call a friend",
+        "Go outside for 5 minutes",
+        "Do 10 jumping jacks",
+        "Write down 3 things you're grateful for",
+        "Take 5 deep breaths",
+        "Stretch for 2 minutes",
+        "Drink a glass of water",
+        "Listen to your favorite song",
+        "Organize one small area",
+        "Send someone a kind message",
+        "Take a short walk",
+        "Do a quick meditation"
+    ]
     
     var body: some View {
         ZStack {
@@ -326,6 +346,81 @@ struct HomeView: View {
                             .foregroundColor(.gray)
                     }
                     .padding(.horizontal, 24)
+                    
+                    // Daily Activity Challenge
+                    VStack(spacing: 20) {
+                        Text("Daily Activity Challenge")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        VStack(spacing: 20) {
+                            // Challenge display box
+                            VStack(spacing: 12) {
+                                Text("Today's Challenge:")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.gray)
+                                
+                                // Slot machine container
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.1))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        )
+                                        .frame(height: 120)
+                                    
+                                    // Slot machine - ALWAYS showing the full list
+                                    VStack(spacing: 0) {
+                                        // First item: ??? or current activity
+                                        Text(currentActivity.isEmpty ? "???" : currentActivity)
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .multilineTextAlignment(.center)
+                                            .frame(height: 120)
+                                            .frame(maxWidth: .infinity)
+                                        
+                                        // All activities repeated 50 times for truly endless scroll
+                                        ForEach(0..<(activities.count * 50), id: \.self) { index in
+                                            Text(activities[index % activities.count])
+                                                .font(.system(size: 18, weight: .bold))
+                                                .foregroundColor(.white)
+                                                .multilineTextAlignment(.center)
+                                                .frame(height: 120)
+                                                .frame(maxWidth: .infinity)
+                                        }
+                                    }
+                                    .offset(y: slotOffset)
+                                    .frame(height: 120)
+                                    .clipped()
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                            .padding(.vertical, 16)
+                            
+                            // Spin button
+                            Button(action: spinSlot) {
+                                HStack {
+                                    Image(systemName: isSpinning ? "arrow.triangle.2.circlepath" : "sparkles")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    
+                                    Text(hasSpunToday ? "Already spun today!" : (isSpinning ? "Spinning..." : "Get Challenge"))
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundColor(hasSpunToday ? .gray : .black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(hasSpunToday ? Color.gray.opacity(0.3) : Color.white)
+                                        .shadow(color: hasSpunToday ? .clear : .white.opacity(0.5), radius: 8, x: 0, y: 0)
+                                )
+                            }
+                            .disabled(hasSpunToday || isSpinning)
+                        }
+                    }
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 100) // Space for bottom nav
                     
                 }
@@ -372,6 +467,9 @@ struct HomeView: View {
         hasCompletedToday = weeklyStressData.contains { 
             Calendar.current.isDate($0.day, inSameDayAs: today)
         }
+        
+        // Load daily challenge data
+        loadDailyChallenge()
     }
     
     private func saveStressData(_ data: StressDataPoint) {
@@ -416,6 +514,165 @@ struct HomeView: View {
         if let url = URL(string: "tel:988") {
             UIApplication.shared.open(url)
         }
+    }
+    
+    private func spinSlot() {
+        guard !hasSpunToday && !isSpinning else { return }
+        
+        // Pick the final activity
+        let randomIndex = Int.random(in: 0..<activities.count)
+        print("🎰 Selected random activity index: \(randomIndex), activity: \(activities[randomIndex])")
+        
+        // Start spinning
+        isSpinning = true
+        slotOffset = 0
+        
+        // Calculate total distance to scroll through activities
+        // Each activity is 120px tall
+        // VStack structure: [currentActivity/???] + [activities * 50]
+        // We want to land on activities[randomIndex] in one of the later cycles
+        let fullCycles = 7  // Scroll through several full cycles
+        // Position in VStack: 1 (first item) + (fullCycles * activities.count) + randomIndex
+        let targetPosition = 1 + (fullCycles * activities.count) + randomIndex
+        let totalOffset = CGFloat(targetPosition * 120)
+        
+        print("🎰 Target position: \(targetPosition), offset: \(totalOffset)")
+        
+        // Animate scrolling with easeOut for slot machine effect
+        withAnimation(.easeOut(duration: 3.0)) {
+            slotOffset = -totalOffset
+        }
+        
+        // After animation completes, update to show the result
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            print("🎰 Animation complete, setting currentActivity to: \(activities[randomIndex])")
+            
+            // Set the selected activity and mark as done
+            currentActivity = activities[randomIndex]
+            hasSpunToday = true
+            isSpinning = false
+            
+            // Save the daily challenge
+            saveDailyChallenge()
+            
+            // Instantly reset offset to 0 to show the first item (which is now the selected activity)
+            withAnimation(.none) {
+                slotOffset = 0
+            }
+        }
+    }
+    
+    private func saveDailyChallenge() {
+        let today = Calendar.current.startOfDay(for: Date())
+        UserDefaults.standard.set(currentActivity, forKey: "dailyChallenge_activity")
+        UserDefaults.standard.set(today.timeIntervalSince1970, forKey: "dailyChallenge_date")
+        UserDefaults.standard.set(true, forKey: "dailyChallenge_hasSpun")
+    }
+    
+    private func loadDailyChallenge() {
+        let today = Calendar.current.startOfDay(for: Date())
+        
+        // Load the saved date and check if it's today
+        if let savedDateInterval = UserDefaults.standard.object(forKey: "dailyChallenge_date") as? TimeInterval {
+            let savedDate = Date(timeIntervalSince1970: savedDateInterval)
+            
+            if Calendar.current.isDate(savedDate, inSameDayAs: today) {
+                // It's still today, load the saved challenge
+                if let savedActivity = UserDefaults.standard.string(forKey: "dailyChallenge_activity") {
+                    currentActivity = savedActivity
+                    hasSpunToday = true
+                    print("🎰 Loaded today's challenge: \(savedActivity)")
+                }
+            } else {
+                // It's a new day, reset
+                currentActivity = ""
+                hasSpunToday = false
+                print("🎰 New day! Ready to spin")
+            }
+        } else {
+            // No saved data, first time
+            currentActivity = ""
+            hasSpunToday = false
+            print("🎰 First time! Ready to spin")
+        }
+    }
+}
+
+struct WheelSection: View {
+    let activity: String
+    let index: Int
+    let totalSections: Int
+    
+    private var sectionAngle: Double {
+        360.0 / Double(totalSections)
+    }
+    
+    private var startAngle: Angle {
+        .degrees(Double(index) * sectionAngle - 90) // -90 to start from top
+    }
+    
+    private var endAngle: Angle {
+        .degrees(Double(index + 1) * sectionAngle - 90)
+    }
+    
+    private var sectionColor: Color {
+        let colors: [Color] = [
+            Color(red: 0.0, green: 0.5, blue: 1.0),      // Bright blue
+            Color(red: 0.0, green: 0.9, blue: 0.3),      // Bright green
+            Color(red: 0.7, green: 0.0, blue: 1.0),      // Bright purple
+            Color(red: 1.0, green: 0.5, blue: 0.0),      // Bright orange
+            Color(red: 1.0, green: 0.2, blue: 0.6),      // Bright pink
+            Color(red: 0.0, green: 0.9, blue: 1.0),      // Bright cyan
+            Color(red: 0.3, green: 0.0, blue: 1.0),      // Bright indigo
+            Color(red: 0.4, green: 1.0, blue: 0.8),      // Bright mint
+            Color(red: 0.0, green: 0.8, blue: 0.7),      // Bright teal
+            Color(red: 1.0, green: 0.9, blue: 0.0),      // Bright yellow
+            Color(red: 1.0, green: 0.0, blue: 0.3),      // Bright red
+            Color(red: 1.0, green: 0.3, blue: 0.0)       // Bright orange-red
+        ]
+        return colors[index % colors.count]
+    }
+    
+    var body: some View {
+        ZStack {
+            // Glow layer (outer)
+            Circle()
+                .trim(from: 0, to: 1.0 / Double(totalSections))
+                .stroke(sectionColor.opacity(0.4), lineWidth: 135)
+                .frame(width: 250, height: 250)
+                .blur(radius: 8)
+                .rotationEffect(startAngle)
+            
+            // Section slice (main color)
+            Circle()
+                .trim(from: 0, to: 1.0 / Double(totalSections))
+                .stroke(sectionColor.opacity(0.9), lineWidth: 125)
+                .frame(width: 250, height: 250)
+                .rotationEffect(startAngle)
+                .shadow(color: sectionColor.opacity(0.6), radius: 6, x: 0, y: 0)
+        }
+        .overlay(
+            // Activity text - oriented radially (perpendicular to section) - ABOVE colors
+            Text(activity)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 90) // Fit text within section
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .rotationEffect(.degrees(90)) // Rotate text 90° to be vertical
+                .offset(x: 0, y: -116) // Further from center, on the section
+                .rotationEffect(.degrees(Double(index) * sectionAngle + sectionAngle / 2 - 90)) // Align with section center and adjust for text rotation
+                .shadow(color: Color.black.opacity(0.8), radius: 2, x: 0, y: 0) // Text shadow for better visibility
+        )
+    }
+    
+    private var shortActivityText: String {
+        // Shorten text for display on wheel
+        let words = activity.split(separator: " ")
+        if words.count > 2 {
+            return String(words[0...1].joined(separator: " "))
+        }
+        return activity
     }
 }
 

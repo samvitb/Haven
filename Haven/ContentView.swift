@@ -13,16 +13,40 @@ struct ContentView: View {
     @State private var selectedTab = 0
     
     var body: some View {
-        if hasCompletedOnboarding && !userName.isEmpty {
-            MainTabView(userName: userName, selectedTab: $selectedTab)
-        } else {
-            OnboardingView(
-                onComplete: { name in
-                    userName = name
-                    hasCompletedOnboarding = true
-                }
-            )
+        Group {
+            if hasCompletedOnboarding && !userName.isEmpty {
+                MainTabView(userName: userName, selectedTab: $selectedTab)
+            } else {
+                OnboardingView(
+                    onComplete: { name in
+                        userName = name
+                        hasCompletedOnboarding = true
+                        saveOnboardingData(name: name)
+                    }
+                )
+            }
         }
+        .onAppear {
+            loadOnboardingData()
+        }
+    }
+    
+    // MARK: - UserDefaults Persistence
+    
+    private func loadOnboardingData() {
+        let profile = UserProfileManager.loadProfile()
+        
+        if let name = profile.name, !name.isEmpty, profile.hasCompleted {
+            userName = name
+            hasCompletedOnboarding = true
+        }
+    }
+    
+    private func saveOnboardingData(name: String) {
+        // Save is now handled in OnboardingView with full profile data
+        // This is kept for backwards compatibility
+        UserDefaults.standard.set(name, forKey: "userName")
+        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
     }
 }
 
@@ -93,11 +117,53 @@ struct MainTabView: View {
                 .animation(.easeInOut(duration: 0.3), value: selectedTab)
                 .ignoresSafeArea(.all, edges: [.top, .bottom])
                 
+                // Blur zone at bottom (covers area where nav bar sits)
+                VStack {
+                    Spacer()
+                    
+                    ZStack {
+                        // Gradient overlay to darken content underneath
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: Color.clear, location: 0.0),
+                                        .init(color: Color.black.opacity(0.5), location: 0.3),
+                                        .init(color: Color.black.opacity(0.8), location: 0.7),
+                                        .init(color: Color.black.opacity(0.9), location: 1.0)
+                                    ]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                        
+                        // Blur effect
+                        Rectangle()
+                            .fill(Color.white.opacity(0.001))
+                            .background(.ultraThinMaterial)
+                            .mask(
+                                LinearGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: Color.clear, location: 0.0),
+                                        .init(color: Color.white.opacity(0.5), location: 0.2),
+                                        .init(color: Color.white, location: 0.4),
+                                        .init(color: Color.white, location: 1.0)
+                                    ]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .frame(height: 140)
+                    .allowsHitTesting(false)
+                }
+                .ignoresSafeArea()
+                
                 // Floating Navigation Bar - Completely separate from content
                 VStack {
                     Spacer()
                     
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         ForEach(0..<4, id: \.self) { index in
                             Button(action: {
                                 previousTab = selectedTab
@@ -105,34 +171,58 @@ struct MainTabView: View {
                                     selectedTab = index
                                 }
                             }) {
-                                VStack(spacing: 4) {
+                                VStack(spacing: 2) {
                                     Image(systemName: bottomNavIcons[index])
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(selectedTab == index ? .white : .gray.opacity(0.7))
                                     
                                     Text(bottomNavLabels[index])
-                                        .font(.system(size: 9, weight: .medium))
+                                        .font(.system(size: 8, weight: .medium))
                                         .foregroundColor(selectedTab == index ? .white : .gray.opacity(0.7))
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 4)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 3)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedTab == index ? Color.white.opacity(0.2) : Color.clear)
+                                    ZStack {
+                                        if selectedTab == index {
+                                            // Glassy background with blur
+                                            Capsule()
+                                                .fill(Color.white.opacity(0.15))
+                                                .background(
+                                                    Capsule()
+                                                        .fill(.ultraThinMaterial)
+                                                )
+                                                .overlay(
+                                                    Capsule()
+                                                        .stroke(
+                                                            LinearGradient(
+                                                                gradient: Gradient(colors: [
+                                                                    Color.white.opacity(0.4),
+                                                                    Color.white.opacity(0.1)
+                                                                ]),
+                                                                startPoint: .topLeading,
+                                                                endPoint: .bottomTrailing
+                                                            ),
+                                                            lineWidth: 1
+                                                        )
+                                                )
+                                                .shadow(color: Color.white.opacity(0.2), radius: 4, x: 0, y: 0)
+                                        }
+                                    }
                                 )
                             }
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
+                        Capsule()
                             .fill(
                                 Color.black.opacity(0.3)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 20)
+                                Capsule()
                                     .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
                             )
                             .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
@@ -166,16 +256,116 @@ struct ProgressView: View {
 }
 
 struct ProfileView: View {
+    @State private var showResetConfirmation = false
+    
     var body: some View {
-        VStack {
-            Text("Profile")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-            Text("Coming soon...")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.gray)
+        ScrollView {
+            VStack(spacing: 24) {
+                // Header
+                Text("Profile")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 60)
+                
+                // User info section
+                VStack(spacing: 16) {
+                    if let name = UserProfileManager.userName {
+                        ProfileInfoRow(label: "Name", value: name, icon: "person.fill")
+                    }
+                    
+                    if let age = UserProfileManager.userAge {
+                        ProfileInfoRow(label: "Age", value: "\(age)", icon: "calendar")
+                    }
+                    
+                    if let occupation = UserProfileManager.userOccupation {
+                        ProfileInfoRow(label: "Occupation", value: occupation, icon: "briefcase.fill")
+                    }
+                }
+                .padding(.horizontal, 24)
+                
+                Spacer()
+                    .frame(height: 40)
+                
+                // Reset profile button (for testing/future customization)
+                Button(action: {
+                    showResetConfirmation = true
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Reset Profile")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.red.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                }
+                .padding(.horizontal, 24)
+                
+                Text("This will clear all your data and return you to onboarding.")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+            .padding(.bottom, 100)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .alert("Reset Profile?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                UserProfileManager.clearProfile()
+                // Force app restart by exiting
+                exit(0)
+            }
+        } message: {
+            Text("This will delete all your profile data and you'll need to complete onboarding again. This action cannot be undone.")
+        }
+    }
+}
+
+struct ProfileInfoRow: View {
+    let label: String
+    let value: String
+    let icon: String
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.white)
+                .frame(width: 32)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(label)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.gray)
+                
+                Text(value)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: .white.opacity(0.05), radius: 8, x: 0, y: 0)
+        )
     }
 }
 

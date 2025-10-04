@@ -14,6 +14,15 @@ struct OnboardingView: View {
     @State private var userAge = 18
     @State private var selectedOccupation = ""
     
+    // Save all onboarding data to UserDefaults
+    private func saveUserProfile() {
+        UserDefaults.standard.set(userName, forKey: "userName")
+        UserDefaults.standard.set(userAge, forKey: "userAge")
+        UserDefaults.standard.set(selectedOccupation, forKey: "userOccupation")
+        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        print("💾 Saved complete user profile: \(userName), \(userAge), \(selectedOccupation)")
+    }
+    
     private let occupations = [
         "Student", "Software Engineer", "Teacher", "Healthcare Worker", "Construction Worker",
         "Sales Representative", "Manager", "Engineer", "Designer", "Consultant", "Veteran",
@@ -101,7 +110,17 @@ struct OnboardingView: View {
                     case 2:
                         AgeInputView(userAge: $userAge, currentStep: $currentStep)
                     case 3:
-                        OccupationSelectionView(selectedOccupation: $selectedOccupation, occupations: occupations, currentStep: $currentStep, userName: userName, userAge: userAge, onComplete: onComplete)
+                        OccupationSelectionView(
+                            selectedOccupation: $selectedOccupation,
+                            occupations: occupations,
+                            currentStep: $currentStep,
+                            userName: userName,
+                            userAge: userAge,
+                            onComplete: { name in
+                                saveUserProfile()
+                                onComplete(name)
+                            }
+                        )
                     default:
                         WelcomeScreenView(currentStep: $currentStep)
                     }
